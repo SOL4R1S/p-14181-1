@@ -13,18 +13,19 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1PostController", description = "API 글 컨트롤러")
 public class ApiV1PostController {
     private final PostService postService;
     private final MemberService memberService;
-
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -34,16 +35,14 @@ public class ApiV1PostController {
 
         return items
                 .stream()
-                .map(PostDto::new)
+                .map(PostDto::new) // PostDto로 변환
                 .toList();
     }
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     @Operation(summary = "단건 조회")
-    public PostDto getItem(
-            @PathVariable int id
-    ) {
+    public PostDto getItem(@PathVariable int id) {
         Post post = postService.findById(id).get();
 
         return new PostDto(post);
@@ -64,7 +63,7 @@ public class ApiV1PostController {
     }
 
 
-    public record PostWriteReqBody(
+    record PostWriteReqBody(
             @NotBlank
             @Size(min = 2, max = 100)
             String title,
@@ -78,10 +77,12 @@ public class ApiV1PostController {
     @Transactional
     @Operation(summary = "작성")
     public RsData<PostDto> write(
-            @RequestBody @Valid PostWriteReqBody reqBody
+            @Valid @RequestBody PostWriteReqBody reqBody,
+            @NotBlank @Size(min = 2, max = 30) String username
     ) {
-        Member actor = memberService.findByUsername("user1").get(); // 임시로 작성자를 user1로 지정
+        Member actor = memberService.findByUsername(username).get();
         Post post = postService.write(actor, reqBody.title, reqBody.content);
+
         return new RsData<>(
                 "201-1",
                 "%d번 글이 작성되었습니다.".formatted(post.getId()),
@@ -89,8 +90,7 @@ public class ApiV1PostController {
         );
     }
 
-
-    public record PostModifyReqBody(
+    record PostModifyReqBody(
             @NotBlank
             @Size(min = 2, max = 100)
             String title,
@@ -105,10 +105,9 @@ public class ApiV1PostController {
     @Operation(summary = "수정")
     public RsData<Void> modify(
             @PathVariable int id,
-            @RequestBody @Valid PostModifyReqBody reqBody
+            @Valid @RequestBody PostModifyReqBody reqBody
     ) {
         Post post = postService.findById(id).get();
-
         postService.modify(post, reqBody.title, reqBody.content);
 
         return new RsData<>(
