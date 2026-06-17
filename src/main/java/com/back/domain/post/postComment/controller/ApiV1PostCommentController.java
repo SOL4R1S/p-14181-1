@@ -6,25 +6,31 @@ import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
 import com.back.domain.post.postComment.dto.PostCommentDto;
 import com.back.domain.post.postComment.entity.PostComment;
+import com.back.global.exception.ServiceException;
+import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1PostCommentController", description = "API 댓글 컨트롤러")
 public class ApiV1PostCommentController {
     private final PostService postService;
     private final MemberService memberService;
+    private final Rq rq;
 
 
     @GetMapping
@@ -61,8 +67,11 @@ public class ApiV1PostCommentController {
             @PathVariable int postId,
             @PathVariable int id
     ) {
+        Member actor = rq.getActor();
         Post post = postService.findById(postId).get();
         PostComment postComment = post.findCommentById(id).get();
+
+        postComment.checkActorCanDelete(actor);
 
         postService.deleteComment(post, postComment);
 
@@ -83,13 +92,18 @@ public class ApiV1PostCommentController {
     @PutMapping("/{id}")
     @Transactional
     @Operation(summary = "수정")
+    @SecurityRequirement(name = "bearerAuth")
     public RsData<Void> modify(
             @PathVariable int postId,
             @PathVariable int id,
             @RequestBody @Valid PostCommentModifyReqBody reqBody
     ) {
+        Member actor = rq.getActor();
+
         Post post = postService.findById(postId).get();
         PostComment postComment = post.findCommentById(id).get();
+
+        postComment.checkActorCanModify(actor);
 
         postService.modifyComment(postComment, reqBody.content);
 
@@ -114,7 +128,7 @@ public class ApiV1PostCommentController {
             @PathVariable int postId,
             @Valid @RequestBody PostCommentWriteReqBody reqBody
     ) {
-        Member actor = memberService.findByUsername("user1").get(); // 임시로 작성자를 user1로 지정
+        Member actor = rq.getActor();
 
         Post post = postService.findById(postId).get();
 

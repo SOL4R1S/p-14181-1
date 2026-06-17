@@ -5,8 +5,10 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.domain.post.post.dto.PostDto;
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
+import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -23,15 +25,18 @@ import java.util.List;
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1PostController", description = "API 글 컨트롤러")
+@SecurityRequirement(name = "bearerAuth")
 public class ApiV1PostController {
     private final PostService postService;
     private final MemberService memberService;
+    private final Rq rq;
 
     @GetMapping
     @Transactional(readOnly = true)
     @Operation(summary = "다건 조회")
     public List<PostDto> getItems() {
         List<Post> items = postService.findAll();
+
 
         return items
                 .stream()
@@ -52,7 +57,10 @@ public class ApiV1PostController {
     @Transactional
     @Operation(summary = "삭제")
     public RsData<Void> delete(@PathVariable int id) {
+        Member actor = rq.getActor();
         Post post = postService.findById(id).get();
+
+        post.checkActorCanDelete(actor);
 
         postService.delete(post);
 
@@ -77,13 +85,9 @@ public class ApiV1PostController {
     @Transactional
     @Operation(summary = "작성")
     public RsData<PostDto> write(
-            @Valid @RequestBody PostWriteReqBody reqBody,
-            @NotBlank @Size(min = 2, max = 30) String username,
-            @NotBlank @Size(min = 2, max = 30) String password
+            @RequestBody @Valid PostWriteReqBody reqBody
     ) {
-        Member actor = memberService.findByUsername(username).get();
-        if (!actor.getPassword().equals(password)) throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-
+        Member actor = rq.getActor();
         Post post = postService.write(actor, reqBody.title, reqBody.content);
 
         return new RsData<>(
@@ -108,9 +112,13 @@ public class ApiV1PostController {
     @Operation(summary = "수정")
     public RsData<Void> modify(
             @PathVariable int id,
-            @Valid @RequestBody PostModifyReqBody reqBody
+            @RequestBody @Valid PostModifyReqBody reqBody
     ) {
+        Member actor = rq.getActor();
         Post post = postService.findById(id).get();
+
+        post.checkActorCanModify(actor);
+
         postService.modify(post, reqBody.title, reqBody.content);
 
         return new RsData<>(
