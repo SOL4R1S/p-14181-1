@@ -15,7 +15,7 @@ public class AuthTokenService {
     @Value("${custom.jwt.secretKey}")
     private String secret;
 
-    public String genAccessToken(Member member) {
+    String genAccessToken(Member member) {
         long id = member.getId();
         String username = member.getUsername();
 
@@ -25,7 +25,7 @@ public class AuthTokenService {
                 Map.of("id", id, "username", username)
         );
     }
-    public Map<String, Object> payload(String accessToken) {
+    Map<String, Object> payload(String accessToken) {
         Map<String, Object> parsedPayload = Ut.jwt.payload(secret, accessToken);
 
         if (parsedPayload == null) return null;
