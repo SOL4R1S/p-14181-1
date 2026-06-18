@@ -87,7 +87,7 @@ public class ApiV1PostController {
     public RsData<PostDto> write(
             @RequestBody @Valid PostWriteReqBody reqBody
     ) {
-        Member actor = rq.getActor();
+        Member actor = memberService.findById(rq.getActor().getId()).get();
         Post post = postService.write(actor, reqBody.title, reqBody.content);
 
         return new RsData<>(
