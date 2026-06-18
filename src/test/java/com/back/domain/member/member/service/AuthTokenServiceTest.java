@@ -35,6 +35,7 @@ public class AuthTokenServiceTest {
 
     @Value("${custom.jwt.secretKey}")
     private String secret;
+
     @Test
     @DisplayName("authTokenService 서비스가 존재한다.")
     void t1() {
@@ -122,7 +123,8 @@ public class AuthTokenServiceTest {
                 .containsAllEntriesOf(
                         Map.of(
                                 "id", memberUser1.getId(),
-                                "username", memberUser1.getUsername()
+                                "username", memberUser1.getUsername(),
+                                "name", memberUser1.getName()
                         )
                 );
     }
