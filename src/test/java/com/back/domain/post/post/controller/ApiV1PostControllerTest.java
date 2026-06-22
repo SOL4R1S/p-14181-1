@@ -133,9 +133,12 @@ public class ApiV1PostControllerTest {
     @Test
     @DisplayName("글 작성, without title")
     void t7() throws Exception {
+        Member actor = memberService.findByUsername("user1").get();
+        String actorApiKey = actor.getApiKey();
         ResultActions resultActions = mvc
                 .perform(
                         post("/api/v1/posts")
+                                .header("Authorization", "Bearer " + actorApiKey)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -160,10 +163,13 @@ public class ApiV1PostControllerTest {
     @Test
     @DisplayName("글 작성, without content")
     void t8() throws Exception {
+        Member actor = memberService.findByUsername("user1").get();
+        String actorApiKey = actor.getApiKey();
         ResultActions resultActions = mvc
                 .perform(
                         post("/api/v1/posts")
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + actorApiKey)
                                 .content("""
                                         {
                                             "title": "제목",
@@ -187,7 +193,8 @@ public class ApiV1PostControllerTest {
     @Test
     @DisplayName("글 작성, with wrong json syntax")
     void t9() throws Exception {
-
+        Member actor = memberService.findByUsername("user1").get();
+        String actorApiKey = actor.getApiKey();
         String wrongJsonBody = """
                 {
                     "title": 제목",
@@ -198,6 +205,7 @@ public class ApiV1PostControllerTest {
                 .perform(
                         post("/api/v1/posts")
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + actorApiKey)
                                 .content(wrongJsonBody)
                 )
                 .andDo(print());
@@ -222,8 +230,8 @@ public class ApiV1PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/api/v1/posts/" + id)
-                                .header("Authorization", "Bearer " + actorApiKey)
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + actorApiKey)
                                 .content("""
                                         {
                                             "title": "제목 new",
@@ -358,8 +366,6 @@ public class ApiV1PostControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(handler().handlerType(ApiV1PostController.class))
-                .andExpect(handler().methodName("write"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.resultCode").value("401-1"))
                 .andExpect(jsonPath("$.msg").value("로그인 후 이용해주세요."));
