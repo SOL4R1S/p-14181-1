@@ -5,6 +5,7 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
+import com.back.standard.util.Ut;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -45,7 +45,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             response.setContentType("application/json");
             response.setStatus(rsData.statusCode());
             response.getWriter().write(
-                    objectMapper.writeValueAsString(rsData)
+                    Ut.json.toString(rsData)
             );
         }
     }
