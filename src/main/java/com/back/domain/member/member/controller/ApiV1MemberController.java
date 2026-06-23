@@ -2,6 +2,7 @@ package com.back.domain.member.member.controller;
 
 
 import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.dto.MemberWithUsernameDto;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
@@ -27,7 +28,7 @@ public class ApiV1MemberController {
     private final Rq rq;
 
 
-    record MemberJoinReqBody(
+    public record MemberJoinReqBody(
             @NotBlank
             @Size(min = 2, max = 30)
             String username,
@@ -44,7 +45,7 @@ public class ApiV1MemberController {
     @Transactional
     @Operation(summary = "가입")
     public RsData<MemberDto> join(
-            @Valid @RequestBody MemberJoinReqBody reqBody
+            @RequestBody @Valid MemberJoinReqBody reqBody
     ) {
         Member member = memberService.join(
                 reqBody.username(),
@@ -60,7 +61,7 @@ public class ApiV1MemberController {
     }
 
 
-    record MemberLoginReqBody(
+    public record MemberLoginReqBody(
             @NotBlank
             @Size(min = 2, max = 30)
             String username,
@@ -70,7 +71,7 @@ public class ApiV1MemberController {
     ) {
     }
 
-    record MemberLoginResBody(
+    public record MemberLoginResBody(
             MemberDto item,
             String apiKey,
             String accessToken
@@ -81,7 +82,7 @@ public class ApiV1MemberController {
     @Transactional(readOnly = true)
     @Operation(summary = "로그인")
     public RsData<MemberLoginResBody> login(
-            @Valid @RequestBody MemberLoginReqBody reqBody
+            @RequestBody @Valid MemberLoginReqBody reqBody
     ) {
         Member member = memberService.findByUsername(reqBody.username())
                 .orElseThrow(() -> new ServiceException("401-1", "존재하지 않는 아이디입니다."));
@@ -108,19 +109,6 @@ public class ApiV1MemberController {
     }
 
 
-    @GetMapping("/me")
-    @Transactional(readOnly = true)
-    @Operation(summary = "내 정보")
-    public RsData<MemberDto> me() {
-        Member actor = memberService.findById(rq.getActor().getId()).get();
-
-        return new RsData<>(
-                "200-1",
-                "%s님의 정보입니다.".formatted(actor.getName()),
-                new MemberDto(actor)
-        );
-    }
-
     @DeleteMapping("/logout")
     @Operation(summary = "로그아웃")
     public RsData<Void> logout() {
@@ -131,4 +119,15 @@ public class ApiV1MemberController {
                 "200-1",
                 "로그아웃 되었습니다."
         );
-    }}
+    }
+
+
+    @GetMapping("/me")
+    @Transactional(readOnly = true)
+    @Operation(summary = "내 정보")
+    public MemberWithUsernameDto me() {
+        Member actor = memberService.findById(rq.getActor().getId()).get();
+
+        return new MemberWithUsernameDto(actor);
+    }
+}

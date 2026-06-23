@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -31,13 +32,11 @@ public class ApiV1AdmMemberControllerTest {
 
     @Test
     @DisplayName("다건조회")
+    @WithUserDetails("admin")
     void t1() throws Exception {
-        Member actor = memberService.findByUsername("admin").get();
-        String actorApiKey = actor.getApiKey();
         ResultActions resultActions = mvc
                 .perform(
                         get("/api/v1/adm/members")
-                                .header("Authorization", "Bearer " + actorApiKey)
                 )
                 .andDo(print());
 
@@ -62,14 +61,11 @@ public class ApiV1AdmMemberControllerTest {
 
     @Test
     @DisplayName("다건조회, without permission")
+    @WithUserDetails("user1")
     void t3() throws Exception {
-        Member actor = memberService.findByUsername("user1").get();
-        String actorApiKey = actor.getApiKey();
-
         ResultActions resultActions = mvc
                 .perform(
                         get("/api/v1/adm/members")
-                                .header("Authorization", "Bearer " + actorApiKey)
                 )
                 .andDo(print());
 
@@ -79,17 +75,16 @@ public class ApiV1AdmMemberControllerTest {
                 .andExpect(jsonPath("$.msg").value("권한이 없습니다."));
     }
 
+
     @Test
     @DisplayName("단건조회")
+    @WithUserDetails("admin")
     void t2() throws Exception {
-        Member actor = memberService.findByUsername("admin").get();
-        String actorApiKey = actor.getApiKey();
         int id = 1;
 
         ResultActions resultActions = mvc
                 .perform(
                         get("/api/v1/adm/members/" + id)
-                                .header("Authorization", "Bearer " + actorApiKey)
                 )
                 .andDo(print());
 
@@ -105,18 +100,16 @@ public class ApiV1AdmMemberControllerTest {
                 .andExpect(jsonPath("$.username").value(member.getUsername()))
                 .andExpect(jsonPath("$.name").value(member.getName()));
     }
+
     @Test
     @DisplayName("단건조회, without permission")
+    @WithUserDetails("user1")
     void t4() throws Exception {
-        Member actor = memberService.findByUsername("user1").get();
-        String actorApiKey = actor.getApiKey();
-
         int id = 1;
 
         ResultActions resultActions = mvc
                 .perform(
                         get("/api/v1/adm/members/" + id)
-                                .header("Authorization", "Bearer " + actorApiKey)
                 )
                 .andDo(print());
 
